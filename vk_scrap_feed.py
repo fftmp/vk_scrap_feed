@@ -35,7 +35,7 @@ def generate_atom(page_id):
         _fe.author(name=post['author'])
         if 'image_url' in post.keys():
             _fe.enclosure(url=post['image_url'], type='image/jpeg')
-    return _fg.atom_str()
+    return _fg.atom_str(pretty=True)
 
 
 class _HttpProcessor(BaseHTTPRequestHandler):
