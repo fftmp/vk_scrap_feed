@@ -5,6 +5,7 @@ Get data from public vk.com pages without API usage
 translate page posts to atom feed.
 """
 
+import os
 import logging as log
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from datetime import datetime, timezone
@@ -67,7 +68,7 @@ def main():
     """
     Run simple http server to return atom feeds. Worked at localhost.
     """
-    log.basicConfig(level=log.DEBUG)
+    log.basicConfig(level=log.DEBUG, filename=os.path.dirname(__file__) + '/vk_scrap_feed.log')
     server_address = ('127.2', 8000)
     httpd = HTTPServer(server_address, _HttpProcessor)
     httpd.serve_forever()

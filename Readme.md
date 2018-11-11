@@ -6,16 +6,18 @@ Currently in development.
 
 
 #TODO:
-1. determine relative time in case of different languages
-1. beautiful get first sentence for title
+1. determine relative time in case of languages other than russian.
+1. beautify _get_first_sentence
 1. get various numbers of posts (>10, need pager?)
-1. allow html in description
-1. update, when comment to post added
+1. allow html in description (now only part of text before first html tag shown in description)
+1. optional update, when comment to post added
 1. handle text on base page in case of repost
-1. strange from field in thunderbird (encoding?)
+1. fix strange 'from' field in thunderbird (encoding?)
+1. cache results for work as server for multiple users
+1. add logo for feeds
 
 #Run
-1. run script (better in background)
+1. run script (better in background). Alsa can add it to autostart. For example I add it to openbox autostart (.config/openbox/autostart).
 1. add http://127.2:8000/<page_id> to your feed reader (tested on thunderbird) for all interested pages.
 
 #Run tests
