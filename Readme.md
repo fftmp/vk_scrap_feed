@@ -11,7 +11,12 @@ Currently in development.
 1. get various numbers of posts (>10, need pager?)
 1. allow html in description
 1. update, when comment to post added
+1. handle text on base page in case of repost
+1. strange from field in thunderbird (encoding?)
 
+#Run
+1. run script (better in background)
+1. add http://127.2:8000/<page_id> to your feed reader (tested on thunderbird) for all interested pages.
 
 #Run tests
 python -m unittest -v
