@@ -5,6 +5,7 @@ Get data from public vk.com pages without API usage
 translate page posts to atom feed.
 """
 
+from base64 import b64encode
 import os
 import logging as log
 from http.server import HTTPServer, BaseHTTPRequestHandler
@@ -32,7 +33,7 @@ def generate_atom(page_id):
         _fe.description(post['text_content'])
         _fe.link(href='https://vk.com/' + post['href'], rel='alternate')
         _fe.updated(datetime.fromtimestamp(post['ts'], tz=timezone.utc))
-        _fe.author(name=post['author'])
+        _fe.author(name='=?UTF-8?B?' + b64encode(post['author'].encode()).decode() + '=?=')
         if 'image_url' in post.keys():
             _fe.enclosure(url=post['image_url'], type='image/jpeg')
     return _fg.atom_str(pretty=True)

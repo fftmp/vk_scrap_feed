@@ -12,7 +12,6 @@ Currently in development.
 1. allow html in description (now only part of text before first html tag shown in description)
 1. optional update, when comment to post added
 1. handle text on base page in case of repost
-1. fix strange 'from' field in thunderbird (encoding?)
 1. cache results for work as server for multiple users
 1. add logo for feeds
 
