@@ -96,9 +96,6 @@ def get_posts(page_id, count=10):
         #usually or may be always href == '/wall' + post_info['id']
         post_info['href'] = header.xpath("a[@class='post_link']/@href")[0]
 
-        post_info['author'] = header.xpath("../h5[@class='post_author']" +
-                                           "/a[@class='author']/text()")[0]
-
         _wt = post.xpath("./div[@class='_post_content']/div[@class='post_content']" +
                          "/div[@class='post_info']/div[@class='wall_text']")[0]
 
@@ -113,6 +110,8 @@ def get_posts(page_id, count=10):
                                             "/a[@class='copy_author']/text()")[0]
             post_content = _wt.xpath("./div[@class='copy_quote']")[0]
         else:
+            post_info['author'] = header.xpath("../h5[@class='post_author']" +
+                                               "/a[@class='author']/text()")[0]
             post_content = _wt.xpath("./div[@class='wall_post_cont _wall_post_cont']")[0]
 
         if post_content.xpath("./div[@class='wall_marked_as_ads']"):
