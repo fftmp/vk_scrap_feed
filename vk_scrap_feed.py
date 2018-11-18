@@ -22,8 +22,8 @@ def generate_atom(page_id):
         return ''
     log.debug('generate atom for %s', page_id)
     _fg = FeedGenerator()
-    _fg.id('https://vk.com/' + page_id)
-    _fg.title(page_id)
+    _fg.id('https://vk.com/' + str(page_id))
+    _fg.title(str(page_id))
     _fg.logo('http://ex.com/VK_Logo.png')
     _fg.language('ru')
     for post in posts:
@@ -52,7 +52,7 @@ class _HttpProcessor(BaseHTTPRequestHandler):
             self.send_response(404)
             return
         request = self.path[1:]
-        atom_feed = generate_atom(request)
+        atom_feed = generate_atom(str(request))
         if atom_feed:
             self.send_response(200)
             self.send_header('content-type', 'text/html')

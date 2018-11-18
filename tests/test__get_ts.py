@@ -25,6 +25,3 @@ class Test_get_ts(unittest.TestCase):
   def test_date_with_year(self):
       rel_date_with_year = '<span class="rel_date">3 ноя 2017</span>'
       self.assertEqual(_get_ts(html.fromstring(rel_date_with_year)), 1509656400)
-if __name__ == '__main__':
-    log.setLevel(DEBUG)
-    unittest.main()
