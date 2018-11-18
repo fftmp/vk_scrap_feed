@@ -9,7 +9,6 @@ Currently in development.
 1. determine relative time in case of languages other than russian.
 1. beautify _get_first_sentence
 1. get various numbers of posts (>10, need pager?)
-1. allow html in description (now only part of text before first html tag shown in description)
 1. optional update, when comment to post added
 1. handle text on base page in case of repost
 1. cache results for work as server for multiple users
