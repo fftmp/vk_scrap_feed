@@ -12,7 +12,6 @@ Currently in development.
 1. optional update, when comment to post added
 1. handle text on base page in case of repost
 1. cache results for work as server for multiple users
-1. add logo for feeds
 
 # Run
 1. run script (better in background). Also can add it to autostart. For example I add it to openbox autostart (.config/openbox/autostart).

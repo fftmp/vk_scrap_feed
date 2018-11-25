@@ -7,9 +7,9 @@ import datetime
 import locale
 import logging as log
 import re
+from functools import reduce
 from requests import get as requests_get
 from lxml import html
-from functools import reduce
 
 SITE = 'https://vk.com/'
 
@@ -96,6 +96,8 @@ def get_posts(page_id, count=10):
 
         #usually or may be always href == '/wall' + post_info['id']
         post_info['href'] = header.xpath("a[@class='post_link']/@href")[0]
+        post_info['icon'] = post.xpath(".//div[@class='_post_content']/div[@class='post_header']" +
+                                       "/a[@class='post_image']/img[@class='post_img']/@src")[0].split('?', 1)[0]
 
         _wt = post.xpath("./div[@class='_post_content']/div[@class='post_content']" +
                          "/div[@class='post_info']/div[@class='wall_text']")[0]
@@ -120,7 +122,7 @@ def get_posts(page_id, count=10):
             continue
 
         _tc = post_content.xpath("./div[@class='wall_post_text']/text()")
-        post_info['text_content'] = reduce((lambda x,y: str(x) + str(y)), _tc).replace('\n', ' ') if _tc else ''
+        post_info['text_content'] = reduce((lambda x, y: str(x) + str(y)), _tc).replace('\n', ' ') if _tc else ''
         post_info['title'] = _get_first_sentence(post_info['text_content'])
 
 

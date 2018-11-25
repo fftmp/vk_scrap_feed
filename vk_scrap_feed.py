@@ -24,7 +24,10 @@ def generate_atom(page_id):
     _fg = FeedGenerator()
     _fg.id('https://vk.com/' + str(page_id))
     _fg.title(str(page_id))
-    _fg.logo('http://ex.com/VK_Logo.png')
+
+    # thunderbird don't use it, liferea 'GET' this url, but still use favicon.ico
+    #_fg.icon(posts[0]['icon'])
+
     _fg.language('ru')
     for post in posts:
         _fe = _fg.add_item()
@@ -43,13 +46,22 @@ class _HttpProcessor(BaseHTTPRequestHandler):
     """
     Handler for http.server. Perform only GET requests.
     """
+    _favicon = None
+    @staticmethod
+    def get_favicon():
+        if _HttpProcessor._favicon is None:
+            with open(os.path.dirname(__file__) + '/vk.com.png', 'rb') as _f:
+                _HttpProcessor._favicon = _f.read()
+        return _HttpProcessor._favicon
     def do_GET(self):
         """
         For each request try to get posts from vk.com  using page_id from GET path.
-        Ignore requests to favicon.ico
         """
         if self.path == '/favicon.ico':
-            self.send_response(404)
+            self.send_response(200)
+            self.send_header('content-type', 'image/png')
+            self.end_headers()
+            self.wfile.write(self.get_favicon())
             return
         request = self.path[1:]
         atom_feed = generate_atom(str(request))
