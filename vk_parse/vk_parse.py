@@ -96,23 +96,25 @@ def get_posts(page_id, count=10):
 
         #usually or may be always href == '/wall' + post_info['id']
         post_info['href'] = header.xpath("a[@class='post_link']/@href")[0]
-        post_info['icon'] = post.xpath(".//div[@class='_post_content']/div[@class='post_header']" +
-                                       "/a[@class='post_image']/img[@class='post_img']/@src")[0].split('?', 1)[0]
 
         _wt = post.xpath("./div[@class='_post_content']/div[@class='post_content']" +
                          "/div[@class='post_info']/div[@class='wall_text']")[0]
 
-
-
         if _wt.xpath("div[@class='copy_quote']"):
-            # Repost. Will use author, title, description and content from original message
-            post_info['author'] = _wt.xpath("./div[@class='copy_quote']" +
-                                            "/div[@class='copy_post_header']" +
-                                            "/div[@class='copy_post_header_info']" +
-                                            "/h5[@class='copy_post_author']" +
-                                            "/a[@class='copy_author']/text()")[0]
+            # Repost. Will use icon, author, title, description and content from original message
+            repost_hdr = _wt.xpath("./div[@class='copy_quote']/div[@class='copy_post_header']")[0]
+            post_info['icon'] = repost_hdr.xpath("./a/img[@class='copy_post_img']" +
+                                                 "/@src")[0].split('?', 1)[0]
+
+            post_info['author'] = repost_hdr.xpath("./div[@class='copy_post_header_info']" +
+                                                   "/h5[@class='copy_post_author']" +
+                                                   "/a[@class='copy_author']/text()")[0]
             post_content = _wt.xpath("./div[@class='copy_quote']")[0]
         else:
+            post_info['icon'] = post.xpath("./div[@class='_post_content']" +
+                                           "/div[@class='post_header']" +
+                                           "/a/img[@class='post_img']/@src")[0].split('?', 1)[0]
+
             post_info['author'] = header.xpath("../h5[@class='post_author']" +
                                                "/a[@class='author']/text()")[0]
             post_content = _wt.xpath("./div[@class='wall_post_cont _wall_post_cont']")[0]
