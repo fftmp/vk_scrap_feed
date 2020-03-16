@@ -81,7 +81,10 @@ def main():
     """
     Run simple http server to return atom feeds. Worked at localhost.
     """
-    log.basicConfig(level=log.DEBUG, filename=os.path.dirname(__file__) + '/vk_scrap_feed.log')
+    log.basicConfig(level=log.DEBUG,
+                    format='%(asctime)s %(levelname)-s %(message)s',
+                    datefmt='%Y-%m-%d %H:%M:%S',
+                    filename=os.path.dirname(__file__) + '/vk_scrap_feed.log')
     server_address = ('127.2', 8000)
     httpd = HTTPServer(server_address, _HttpProcessor)
     httpd.serve_forever()
