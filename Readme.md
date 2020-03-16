@@ -18,4 +18,4 @@ Currently in development.
 1. add http://127.2:8000/<page_id> to your feed reader (tested on thunderbird) for all interested pages.
 
 # Run tests
-python -m unittest -v
+`python -m unittest -v`

@@ -71,6 +71,7 @@ class _HttpProcessor(BaseHTTPRequestHandler):
             self.end_headers()
             self.wfile.write(atom_feed)
         else:
+            log.warning('Fail generate atom for %s', page_id)
             self.send_response(202)
             self.send_header('content-type', 'text/html')
             self.end_headers()
