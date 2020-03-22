@@ -7,134 +7,104 @@ import datetime
 import locale
 import logging as log
 import re
-from functools import reduce
-from requests import get as requests_get
-from lxml import html
+from bs4 import BeautifulSoup
 
-SITE = 'https://vk.com/'
 
-def _get_ts(header_info):
-    _ts = 0
-    if header_info.attrib['class'] == 'rel_date rel_date_needs_update':
-        _ts = int(header_info.get('time'))
-    elif header_info.attrib['class'] == 'rel_date':
-        rel_ts = header_info.text
-        locale.setlocale(locale.LC_ALL, 'ru_RU.utf8')
-        date_parts = rel_ts.split(' ')
-        # seems, that relative date is relative against user localtime
-        if date_parts[0] == 'сегодня': #today
-            day = datetime.datetime.now().strftime('%Y-%b-%d')
-            time = date_parts[2]
-        elif date_parts[0] == 'вчера': #yesterday
-            now = datetime.datetime.now()
-            yesterday = now - datetime.timedelta(days=1)
-            day = yesterday.strftime('%Y-%b-%d')
-            time = date_parts[2]
-        else:
-            day_number = date_parts[0]
-            month = date_parts[1]
-            if date_parts[2] == 'в':
-              # '8 ноя в 20:37'
-                year = datetime.datetime.now().year
-                time = date_parts[3]
-            else:
-                # '3 ноя 2017'
-                year = date_parts[2]
-                time = '00:00'
-            day = str(year) + '-' + month + '-' + day_number
-        _ts = mktime(datetime.datetime.strptime(day + ' ' + time, '%Y-%b-%d %H:%M').timetuple())
-        locale.setlocale(locale.LC_ALL, locale.getdefaultlocale())
+def _get_ts(ts_section):
+    # for some posts (seems recent ones) header info contain UNIX timestamp. Try get it first.
+    _ts = ts_section.span.get('time')
+    if _ts:
+      return int(_ts)
 
+    rel_ts = ts_section.span.get_text()
+    locale.setlocale(locale.LC_ALL, 'ru_RU.utf8')
+    date_parts = rel_ts.split(' ')
+    # seems, that relative date is relative against user localtime
+    if date_parts[0] == 'сегодня': #today
+        day = datetime.datetime.now().strftime('%Y-%b-%d')
+        time = date_parts[2]
+    elif date_parts[0] == 'вчера': #yesterday
+        now = datetime.datetime.now()
+        yesterday = now - datetime.timedelta(days=1)
+        day = yesterday.strftime('%Y-%b-%d')
+        time = date_parts[2]
     else:
-        log.error('Error determine timestamp. header = %s',
-                  html.tostring(header_info, encoding='unicode'))
+        day_number = date_parts[0]
+        month = date_parts[1]
+        if date_parts[2] == 'в':
+            # '8 ноя в 20:37'
+            year = datetime.datetime.now().year
+            time = date_parts[3]
+        else:
+            # '3 ноя 2017'
+            year = date_parts[2]
+            time = '00:00'
+        day = str(year) + '-' + month + '-' + day_number
+    _ts = mktime(datetime.datetime.strptime(day + ' ' + time, '%Y-%b-%d %H:%M').timetuple())
+    locale.setlocale(locale.LC_ALL, locale.getdefaultlocale())
     return _ts
 
-def _get_first_sentence(text):
-    sent_len = len(text)
-    for _c in ('.', '!', '?'):
-        _i = text.find(_c)
-        if 0 < _i < sent_len:
-            sent_len = _i
-    return text[0:sent_len + 1]
 
-# command to test picture posting
-def get_posts(page_id, count=10):
+def get_first_sentence(text):
     """
-    Get count posts from page_id. Return dict with parsed information.
-    page_id can be both in string form (like 'darcor' in https://vk.com/darcor) and
-    in number form (like 'id210700286' in https://vk.com/id210700286).
+    Return first part of text till the first occurence one of '.', '!', '?'
+    with space or newline after it. Return full text if can't see end of sentence.
+    Cannot deal with abbreviations and direct speech (quotes).
     """
+    sentence_end_pos = len(text)
+    for _i in range(len(text)):
+      if text[_i] in ('.', '!', '?') and \
+         (_i == len(text) -1 or text[_i + 1] in (' ', '\n')):
+           sentence_end_pos = _i
+           break
 
-    log.debug('Try to get posts from page %s', page_id)
-    #vk.com discriminates its output depending on user-agent
-    resp = requests_get(SITE + page_id, headers={'user-agent': 'Mozilla/5.0 (Linux x86_64)'})
-    page = html.fromstring(resp.text)
-    page_title = page.xpath("head/title")[0].text
-    log.debug("got posts from page with title = %s", page_title)
+    return text[0:sentence_end_pos + 1]
 
-    post_blocks = page.xpath("//body/div[@id='page_wrap']/div/div[@class='scroll_fix']" +
-                             "/div[@id='page_layout']/div[@id='page_body']/div[@id='wrap3']" +
-                             "/div[@id='wrap2']/div[@id='wrap1']/div[@id='content']" +
-                             "/div[@id='public' or @id='profile' or @id='group']" +
-                             "/div[@class='wide_column_left' or @class='wide_column_right']" +
-                             "/div[@class='wide_column_wrap']/div[@id='wide_column']" +
-                             "/div[@id='public_wall' or @id='group_wall' or @id='profile_wall']" +
-                             "/div[@id='page_wall_posts']/div"
-                            )
+
+def _prettify_text_content(text_content_subtree):
+    if text_content_subtree is None:
+        return None
+    line_breaks = text_content_subtree.findAll('br')
+    [br.replaceWith(' ') for br in line_breaks]
+    return text_content_subtree.get_text()
+
+
+def parse_one_post(post_html):
+    post_info = {}
+    post_info['id'] = post_html['id']
+    hdr = post_html.div.find('div', class_='post_header_info')
+    date_fragment = hdr.find('div', class_='post_date').a
+    post_info['ts'] = _get_ts(date_fragment)
+    #usually or may be always href == '/wall' + post_info['id']
+    post_info['href'] = date_fragment['href'] # somewhy href located inside 'post_date' subtree
+    post_info['author'] = hdr.find('a', class_='author').get_text()
+
+    quote_subtree = post_html.find('div', class_='copy_quote')
+    post_info['is_repost'] = True if quote_subtree else False
+    text_tree = post_html.find('div', class_='wall_post_cont').find('div', class_='wall_post_text')
+    post_info['text_content'] = _prettify_text_content(text_tree)
+
+    if post_info['is_repost']:
+      post_info['orig_post'] = {}
+      post_info['orig_post']['author'] = quote_subtree.find('a', class_='copy_author').get_text()
+      text_tree = quote_subtree.find('div', class_='wall_post_text')
+      post_info['orig_post']['text_content'] = _prettify_text_content(text_tree)
+
+    # try to get *any* image from post
+    _img_wo_ext = re.search(r'background-image: url\((.+?)\.jpg\)', str(post_html))
+    if _img_wo_ext:
+        post_info['image_url'] = _img_wo_ext.group(1) + '.jpg'
+    return post_info
+
+
+def parse_posts(page_text):
+    page = BeautifulSoup(page_text, features='lxml')
+    page_title = page.head.title.contents[0]
+    log.debug('parse page with title = %s', page_title)
+    post_blocks = page.find('div', id='page_wall_posts')
     posts = []
-    for post in post_blocks:
-        if post.attrib['class'] == 'page_block no_posts':
-            log.info('have no more posts')
-            break
-        count -= 1
-        post_info = {}
-        post_info['id'] = post.get('data-post-id')
-        header = post.xpath(".//div[@class='_post_content']/div[@class='post_header']" +
-                            "/div[@class='post_header_info']/div[@class='post_date']")[0]
-        post_info['ts'] = _get_ts(header.xpath(".//a[@class='post_link']/node()")[0])
-
-        #usually or may be always href == '/wall' + post_info['id']
-        post_info['href'] = header.xpath("a[@class='post_link']/@href")[0]
-
-        _wt = post.xpath("./div[@class='_post_content']/div[@class='post_content']" +
-                         "/div[@class='post_info']/div[@class='wall_text']")[0]
-
-        if _wt.xpath("div[@class='copy_quote']"):
-            # Repost. Will use icon, author, title, description and content from original message
-            repost_hdr = _wt.xpath("./div[@class='copy_quote']/div[@class='copy_post_header']")[0]
-            post_info['icon'] = repost_hdr.xpath("./a/img[@class='copy_post_img']" +
-                                                 "/@src")[0].split('?', 1)[0]
-
-            post_info['author'] = repost_hdr.xpath("./div[@class='copy_post_header_info']" +
-                                                   "/h5[@class='copy_post_author']" +
-                                                   "/a[@class='copy_author']/text()")[0]
-            post_content = _wt.xpath("./div[@class='copy_quote']")[0]
-        else:
-            post_info['icon'] = post.xpath("./div[@class='_post_content']" +
-                                           "/div[@class='post_header']" +
-                                           "/a/img[@class='post_img']/@src")[0].split('?', 1)[0]
-
-            post_info['author'] = header.xpath("../h5[@class='post_author']" +
-                                               "/a[@class='author']/text()")[0]
-            post_content = _wt.xpath("./div[@class='wall_post_cont _wall_post_cont']")[0]
-
-        if post_content.xpath("./div[@class='wall_marked_as_ads']"):
-            log.debug('Ads. Skipping.')
-            continue
-
-        _tc = post_content.xpath("./div[@class='wall_post_text']/text()")
-        post_info['text_content'] = reduce((lambda x, y: str(x) + str(y)), _tc).replace('\n', ' ') if _tc else ''
-        post_info['title'] = _get_first_sentence(post_info['text_content'])
-
-
-        _img_style = post_content.xpath("div[@class='page_post_sized_thumbs  clear_fix']/a/@style")
-        if _img_style:
-            _img_wo_ext = re.search(r'background-image: url\((.+?)\.jpg\)', _img_style[0])
-            if _img_wo_ext:
-                post_info['image_url'] = _img_wo_ext.group(1) + '.jpg'
-
+    for post in post_blocks.find_all('div', class_='post'):
+        post_info = parse_one_post(post)
         posts.append(post_info)
-        if count == 0:
-            break
     return posts
+
