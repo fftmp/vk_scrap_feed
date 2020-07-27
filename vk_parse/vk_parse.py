@@ -14,7 +14,7 @@ def _get_ts(ts_section):
     # for some posts (seems recent ones) header info contain UNIX timestamp. Try get it first.
     _ts = ts_section.span.get('time')
     if _ts:
-      return int(_ts)
+        return int(_ts)
 
     rel_ts = ts_section.span.get_text()
     locale.setlocale(locale.LC_ALL, 'ru_RU.utf8')
@@ -53,10 +53,9 @@ def get_first_sentence(text):
     """
     sentence_end_pos = len(text)
     for _i in range(len(text)):
-      if text[_i] in ('.', '!', '?') and \
-         (_i == len(text) -1 or text[_i + 1] in (' ', '\n')):
-           sentence_end_pos = _i
-           break
+        if text[_i] in ('.', '!', '?') and (_i == len(text) -1 or text[_i + 1] in (' ', '\n')):
+            sentence_end_pos = _i
+            break
 
     return text[0:sentence_end_pos + 1]
 
@@ -80,15 +79,15 @@ def parse_one_post(post_html):
     post_info['author'] = hdr.find('a', class_='author').get_text()
 
     quote_subtree = post_html.find('div', class_='copy_quote')
-    post_info['is_repost'] = True if quote_subtree else False
+    post_info['is_repost'] = bool(quote_subtree)
     text_tree = post_html.find('div', class_='wall_post_cont').find('div', class_='wall_post_text')
     post_info['text_content'] = _prettify_text_content(text_tree)
 
     if post_info['is_repost']:
-      post_info['orig_post'] = {}
-      post_info['orig_post']['author'] = quote_subtree.find('a', class_='copy_author').get_text()
-      text_tree = quote_subtree.find('div', class_='wall_post_text')
-      post_info['orig_post']['text_content'] = _prettify_text_content(text_tree)
+        post_info['orig_post'] = {}
+        post_info['orig_post']['author'] = quote_subtree.find('a', class_='copy_author').get_text()
+        text_tree = quote_subtree.find('div', class_='wall_post_text')
+        post_info['orig_post']['text_content'] = _prettify_text_content(text_tree)
 
     # try to get *any* image from post
     _img_wo_ext = re.search(r'background-image: url\((.+?)\.jpg\)', str(post_html))
@@ -108,4 +107,3 @@ def parse_posts(page_text):
         post_info = parse_one_post(post)
         posts.append(post_info)
     return posts
-

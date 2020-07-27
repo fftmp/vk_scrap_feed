@@ -8,10 +8,10 @@ translate page posts to atom feed.
 from base64 import b64encode
 import os
 import logging as log
-from requests import get as requests_get
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from datetime import datetime, timezone
 from feedgen.feed import FeedGenerator
+from requests import get as requests_get
 from vk_parse.vk_parse import parse_posts, get_first_sentence
 
 SITE = 'https://vk.com/'
@@ -26,7 +26,8 @@ def generate_atom(page_id):
 
     log.debug('generate atom for %s', page_id)
     #vk.com discriminates its output depending on user-agent
-    resp = requests_get(SITE + page_id, headers={'user-agent': 'Mozilla/5.0 (Linux x86_64)', 'Accept-Charset': 'utf-8'})
+    resp = requests_get(SITE + page_id, headers={'user-agent': 'Mozilla/5.0 (Linux x86_64)',
+                                                 'Accept-Charset': 'utf-8'})
     posts = parse_posts(resp.text)
     if not posts:
         log.warning('no posts - parsing failed or empty page')
@@ -53,9 +54,9 @@ def generate_atom(page_id):
             _fe.description((post['text_content'] or '') + '\n\n' + post['orig_post']['text_content'])
             author = post['orig_post']['author']
         else:
-          _fe.description(post['text_content'])
-          author = post['author']
-        _fe.author(name='=?UTF-8?B?' + b64encode(author.encode()).decode() + '=?=')
+            _fe.description(post['text_content'])
+            author = post['author']
+            _fe.author(name='=?UTF-8?B?' + b64encode(author.encode()).decode() + '=?=')
         if 'image_url' in post.keys():
             _fe.enclosure(url=post['image_url'], type='image/jpeg')
     return _fg.atom_str(pretty=True)
@@ -90,7 +91,7 @@ class _HttpProcessor(BaseHTTPRequestHandler):
             self.end_headers()
             self.wfile.write(atom_feed)
         else:
-            log.warning('Fail generate atom for %s', page_id)
+            log.warning('Fail generate atom for %s', str(request))
             self.send_response(202)
             self.send_header('content-type', 'text/html')
             self.end_headers()
