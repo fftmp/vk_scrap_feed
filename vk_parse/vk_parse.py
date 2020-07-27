@@ -98,6 +98,7 @@ def parse_one_post(post_html):
 
 
 def parse_posts(page_text):
+    page_text = page_text.replace('\xa0', ' ') # change non-breaking space to normal space
     page = BeautifulSoup(page_text, features='lxml')
     page_title = page.head.title.contents[0]
     log.debug('parse page with title = %s', page_title)

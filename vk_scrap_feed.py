@@ -26,9 +26,10 @@ def generate_atom(page_id):
 
     log.debug('generate atom for %s', page_id)
     #vk.com discriminates its output depending on user-agent
-    resp = requests_get(SITE + page_id, headers={'user-agent': 'Mozilla/5.0 (Linux x86_64)'})
+    resp = requests_get(SITE + page_id, headers={'user-agent': 'Mozilla/5.0 (Linux x86_64)', 'Accept-Charset': 'utf-8'})
     posts = parse_posts(resp.text)
     if not posts:
+        log.warning('no posts - parsing failed or empty page')
         return ''
 
     _fg = FeedGenerator()
