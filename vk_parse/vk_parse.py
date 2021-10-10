@@ -71,12 +71,11 @@ def _prettify_text_content(text_content_subtree):
 def parse_one_post(post_html):
     post_info = {}
     post_info['id'] = post_html['id']
-    hdr = post_html.div.find('div', class_='post_header_info')
-    date_fragment = hdr.find('div', class_='post_date').a
+    date_fragment = post_html.find('div', class_='post_date').a
     post_info['ts'] = _get_ts(date_fragment)
     #usually or may be always href == '/wall' + post_info['id']
     post_info['href'] = date_fragment['href'] # somewhy href located inside 'post_date' subtree
-    post_info['author'] = hdr.find('a', class_='author').get_text()
+    post_info['author'] = post_html.find('h5', class_='post_author').a.get_text()
 
     quote_subtree = post_html.find('div', class_='copy_quote')
     post_info['is_repost'] = bool(quote_subtree)
